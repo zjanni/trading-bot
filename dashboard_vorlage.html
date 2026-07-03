@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trading-Bot Backtest</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0f1420;
+    --karte: #1a2132;
+    --rand: #2a3348;
+    --text: #e8ecf4;
+    --text-leise: #8b95ab;
+    --gruen: #34d399;
+    --rot: #f87171;
+    --blau: #60a5fa;
+    --orange: #fbbf24;
+    --lila: #a78bfa;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    padding: 24px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  h1 { font-size: 1.5rem; margin-bottom: 4px; }
+  .untertitel { color: var(--text-leise); margin-bottom: 24px; font-size: 0.9rem; }
+
+  .kennzahlen {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+  .kennzahl {
+    background: var(--karte);
+    border: 1px solid var(--rand);
+    border-radius: 12px;
+    padding: 16px;
+  }
+  .kennzahl .label { color: var(--text-leise); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; }
+  .kennzahl .wert { font-size: 1.5rem; font-weight: 600; margin-top: 4px; }
+  .positiv { color: var(--gruen); }
+  .negativ { color: var(--rot); }
+
+  .karte {
+    background: var(--karte);
+    border: 1px solid var(--rand);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 24px;
+  }
+  .karte h2 { font-size: 1rem; margin-bottom: 4px; }
+  .karte .beschreibung { color: var(--text-leise); font-size: 0.85rem; margin-bottom: 16px; }
+  .chart-box { position: relative; height: 380px; }
+  .chart-box.klein { height: 300px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  th, td { padding: 8px 10px; text-align: right; }
+  th:first-child, td:first-child { text-align: left; }
+  th { color: var(--text-leise); font-weight: 500; border-bottom: 1px solid var(--rand); }
+  tr:nth-child(even) td { background: rgba(255,255,255,0.02); }
+
+  .hinweis {
+    background: rgba(251,191,36,0.08);
+    border: 1px solid rgba(251,191,36,0.3);
+    border-radius: 12px;
+    padding: 14px 16px;
+    font-size: 0.85rem;
+    color: var(--text-leise);
+    margin-bottom: 24px;
+  }
+</style>
+</head>
+<body>
+
+<h1>📈 Trading-Bot Backtest</h1>
+<div class="untertitel" id="untertitel"></div>
+
+<div class="kennzahlen" id="kennzahlen"></div>
+
+<div class="hinweis">
+  ⚠️ <strong style="color:var(--text)">Backtest ≠ Zukunft:</strong> Diese Zahlen zeigen, wie die Strategie in der
+  Vergangenheit gelaufen wäre. Das ist keine Garantie für die Zukunft – und noch kein echtes Geld im Spiel.
+</div>
+
+<div class="karte">
+  <h2>Kursverlauf &amp; Signale</h2>
+  <div class="beschreibung">Grüne Dreiecke = Kauf, rote Dreiecke = Verkauf. Die beiden Linien sind die gleitenden Durchschnitte (EMA), deren Kreuzungen die Signale auslösen.</div>
+  <div class="chart-box"><canvas id="kursChart"></canvas></div>
+</div>
+
+<div class="karte">
+  <h2>Kapitalverlauf: Strategie vs. Buy &amp; Hold</h2>
+  <div class="beschreibung">So hätte sich dein Startkapital entwickelt. „Buy &amp; Hold" heißt: am ersten Tag kaufen und nie wieder anfassen – die Messlatte, die jede Strategie schlagen muss.</div>
+  <div class="chart-box klein"><canvas id="equityChart"></canvas></div>
+</div>
+
+<div class="karte">
+  <h2>Alle Trades</h2>
+  <div class="beschreibung">Jede Zeile ist ein komplettes Kauf-Verkauf-Paar, Gebühren bereits abgezogen.</div>
+  <table id="tradeTabelle">
+    <thead>
+      <tr><th>#</th><th>Kauf</th><th>Kurs (€)</th><th>Verkauf</th><th>Kurs (€)</th><th>Gewinn (€)</th><th>Gewinn (%)</th></tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+<script>
+const D = /*__DATEN__*/null;
+
+if (!D) {
+  document.body.innerHTML = '<div class="karte"><h2>Das ist nur die Vorlage 😊</h2>' +
+    '<p style="color:var(--text-leise);margin-top:8px">Bitte <code>python backtest.py</code> ausführen ' +
+    'und danach die erzeugte Datei <strong>dashboard.html</strong> öffnen.</p></div>';
+  throw new Error('Vorlage ohne Daten geöffnet');
+}
+
+const euro = z => z.toLocaleString('de-DE', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' €';
+const prozent = z => (z > 0 ? '+' : '') + z.toLocaleString('de-DE') + ' %';
+
+// ---- Untertitel ----
+const s = D.config.strategie;
+document.getElementById('untertitel').textContent =
+  `${D.symbol} · ${D.daten[0]} bis ${D.daten[D.daten.length-1]} · Strategie: EMA ${s.ema_schnell}/${s.ema_langsam} Crossover + RSI-Filter (${s.rsi_periode}) · Gebühr ${D.config.gebuehr_prozent} % pro Trade`;
+
+// ---- Kennzahlen-Karten ----
+const k = D.kennzahlen;
+const karten = [
+  {label: 'Startkapital', wert: euro(k.startkapital)},
+  {label: 'Endkapital', wert: euro(k.endkapital), klasse: k.endkapital >= k.startkapital ? 'positiv' : 'negativ'},
+  {label: 'Rendite Strategie', wert: prozent(k.rendite_prozent), klasse: k.rendite_prozent >= 0 ? 'positiv' : 'negativ'},
+  {label: 'Rendite Buy & Hold', wert: prozent(k.buy_hold_prozent), klasse: k.buy_hold_prozent >= 0 ? 'positiv' : 'negativ'},
+  {label: 'Trades', wert: k.anzahl_trades + (k.noch_investiert ? ' (+1 offen)' : '')},
+  {label: 'Trefferquote', wert: k.trefferquote_prozent + ' %'},
+  {label: 'Max. Drawdown', wert: '−' + k.max_drawdown_prozent + ' %', klasse: 'negativ'},
+];
+document.getElementById('kennzahlen').innerHTML = karten.map(x =>
+  `<div class="kennzahl"><div class="label">${x.label}</div><div class="wert ${x.klasse || ''}">${x.wert}</div></div>`
+).join('');
+
+// ---- Chart-Grundeinstellungen ----
+Chart.defaults.color = '#8b95ab';
+Chart.defaults.borderColor = '#2a3348';
+Chart.defaults.font.family = "'Segoe UI', system-ui, sans-serif";
+
+const datumIndex = {};
+D.daten.forEach((d, i) => datumIndex[d] = i);
+
+// ---- Kurs-Chart mit Signalen ----
+new Chart(document.getElementById('kursChart'), {
+  type: 'line',
+  data: {
+    labels: D.daten,
+    datasets: [
+      {label: 'Kurs', data: D.kurse, borderColor: '#60a5fa', borderWidth: 1.5, pointRadius: 0, tension: 0.1},
+      {label: `EMA ${s.ema_schnell}`, data: D.ema_schnell, borderColor: '#fbbf24', borderWidth: 1, pointRadius: 0, tension: 0.1},
+      {label: `EMA ${s.ema_langsam}`, data: D.ema_langsam, borderColor: '#a78bfa', borderWidth: 1, pointRadius: 0, tension: 0.1},
+      {
+        label: 'Kauf', type: 'scatter', pointStyle: 'triangle', pointRadius: 8, pointHoverRadius: 10,
+        backgroundColor: '#34d399', borderColor: '#34d399',
+        data: D.kauf_signale.map(sig => ({x: sig.datum, y: sig.preis})),
+      },
+      {
+        label: 'Verkauf', type: 'scatter', pointStyle: 'triangle', rotation: 180, pointRadius: 8, pointHoverRadius: 10,
+        backgroundColor: '#f87171', borderColor: '#f87171',
+        data: D.verkauf_signale.map(sig => ({x: sig.datum, y: sig.preis})),
+      },
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    interaction: {mode: 'index', intersect: false},
+    scales: {
+      x: {ticks: {maxTicksLimit: 12}},
+      y: {ticks: {callback: v => v.toLocaleString('de-DE') + ' €'}},
+    },
+    plugins: {legend: {labels: {usePointStyle: true, boxWidth: 8}}},
+  }
+});
+
+// ---- Equity-Chart ----
+new Chart(document.getElementById('equityChart'), {
+  type: 'line',
+  data: {
+    labels: D.daten,
+    datasets: [
+      {label: 'Strategie', data: D.equity, borderColor: '#34d399', backgroundColor: 'rgba(52,211,153,0.08)', fill: true, borderWidth: 1.5, pointRadius: 0, tension: 0.1},
+      {label: 'Buy & Hold', data: D.buy_hold, borderColor: '#8b95ab', borderDash: [5, 4], borderWidth: 1.5, pointRadius: 0, tension: 0.1},
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    interaction: {mode: 'index', intersect: false},
+    scales: {
+      x: {ticks: {maxTicksLimit: 12}},
+      y: {ticks: {callback: v => v.toLocaleString('de-DE') + ' €'}},
+    },
+    plugins: {legend: {labels: {usePointStyle: true, boxWidth: 8}}},
+  }
+});
+
+// ---- Trade-Tabelle ----
+document.querySelector('#tradeTabelle tbody').innerHTML = D.trades.map((t, i) => `
+  <tr>
+    <td>${i + 1}</td>
+    <td>${t.kauf_datum}</td>
+    <td>${t.kauf_preis.toLocaleString('de-DE')}</td>
+    <td>${t.verkauf_datum}</td>
+    <td>${t.verkauf_preis.toLocaleString('de-DE')}</td>
+    <td class="${t.gewinn_euro >= 0 ? 'positiv' : 'negativ'}">${t.gewinn_euro.toLocaleString('de-DE')}</td>
+    <td class="${t.gewinn_prozent >= 0 ? 'positiv' : 'negativ'}">${prozent(t.gewinn_prozent)}</td>
+  </tr>
+`).join('') || '<tr><td colspan="7">Keine abgeschlossenen Trades im Zeitraum.</td></tr>';
+</script>
+
+</body>
+</html>

@@ -1,0 +1,13 @@
+{
+  "symbol": "BTCEUR",
+  "intervall": "1d",
+  "start_datum": "2021-01-01",
+  "startkapital_euro": 1000,
+  "gebuehr_prozent": 0.1,
+  "strategie": {
+    "ema_schnell": 12,
+    "ema_langsam": 26,
+    "rsi_periode": 14,
+    "rsi_kauf_max": 70
+  }
+}

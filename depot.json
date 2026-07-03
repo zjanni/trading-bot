@@ -1,0 +1,19 @@
+{
+  "gestartet_am": "2026-07-02",
+  "startkapital_euro": 1000,
+  "bargeld": 1000.0,
+  "coins": 0.0,
+  "investiert": false,
+  "letzter_kauf": null,
+  "buyhold_coins": 0.01855876943654907,
+  "letzter_verarbeiteter_tag": "2026-07-02",
+  "signale": [],
+  "trades": [],
+  "historie": [
+    {
+      "datum": "2026-07-02",
+      "depotwert": 1000.0,
+      "buy_hold": 999.0
+    }
+  ]
+}
