@@ -155,7 +155,7 @@ def verarbeite_tage(depot, kerzen, config):
     return aktionen, ema_s, ema_l
 
 
-def erzeuge_dashboard(depot, kerzen, ema_s, ema_l, config):
+def erzeuge_dashboard(depot, kerzen, ema_s, ema_l, config, aktionen):
     historie = depot["historie"]
     depotwert = historie[-1]["depotwert"]
     start = depot["startkapital_euro"]
@@ -167,6 +167,11 @@ def erzeuge_dashboard(depot, kerzen, ema_s, ema_l, config):
         "symbol": config["symbol"],
         "config": config,
         "stand": datetime.now(timezone.utc).strftime("%d.%m.%Y, %H:%M Uhr (UTC)"),
+        "letzter_lauf": {
+            "datum": datetime.now(timezone.utc).strftime("%d.%m.%Y"),
+            "zeit": datetime.now(timezone.utc).strftime("%H:%M UTC"),
+            "aktion": aktionen[-1] if aktionen else "kein Signal – Bot wartet",
+        },
         "gestartet_am": depot["gestartet_am"],
         "kennzahlen": {
             "depotwert": depotwert,
@@ -213,7 +218,7 @@ def main():
     with open(DEPOT_DATEI, "w", encoding="utf-8") as f:
         json.dump(depot, f, ensure_ascii=False, indent=2)
 
-    ziel = erzeuge_dashboard(depot, kerzen, ema_s, ema_l, config)
+    ziel = erzeuge_dashboard(depot, kerzen, ema_s, ema_l, config, aktionen)
 
     letzter = depot["historie"][-1]
     status = "investiert" if depot["investiert"] else "in Bargeld"

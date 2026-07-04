@@ -151,6 +151,8 @@ const karten = [
    sub: 'seit Start des Depots'},
   statusKarte,
   {label: 'Trades', wert: k.anzahl_trades},
+  {label: 'Letzter Lauf', wert: D.letzter_lauf.datum,
+   sub: `${D.letzter_lauf.zeit} · ${D.letzter_lauf.aktion}`},
 ];
 document.getElementById('kennzahlen').innerHTML = karten.map(x =>
   `<div class="kennzahl"><div class="label">${x.label}</div><div class="wert ${x.klasse || ''}">${x.wert}</div>` +
