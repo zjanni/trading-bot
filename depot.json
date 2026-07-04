@@ -6,7 +6,7 @@
   "investiert": false,
   "letzter_kauf": null,
   "buyhold_coins": 0.01855876943654907,
-  "letzter_verarbeiteter_tag": "2026-07-02",
+  "letzter_verarbeiteter_tag": "2026-07-03",
   "signale": [],
   "trades": [],
   "historie": [
@@ -14,6 +14,11 @@
       "datum": "2026-07-02",
       "depotwert": 1000.0,
       "buy_hold": 999.0
+    },
+    {
+      "datum": "2026-07-03",
+      "depotwert": 1000.0,
+      "buy_hold": 1014.82
     }
   ]
 }
