@@ -1,24 +1,38 @@
 {
   "gestartet_am": "2026-07-02",
   "startkapital_euro": 1000,
-  "bargeld": 0.0,
-  "coins": 0.017559247079171288,
-  "investiert": true,
+  "bargeld": 955.7216731533349,
+  "coins": 0.0,
+  "investiert": false,
   "letzter_kauf": {
     "datum": "2026-07-14",
     "preis": 56893.1,
     "kapital_vorher": 1000.0
   },
   "buyhold_coins": 0.01855876943654907,
-  "letzter_verarbeiteter_tag": "2026-07-31",
+  "letzter_verarbeiteter_tag": "2026-08-01",
   "signale": [
     {
       "datum": "2026-07-14",
       "typ": "kauf",
       "preis": 56893.1
+    },
+    {
+      "datum": "2026-08-01",
+      "typ": "verkauf",
+      "preis": 54482.88
     }
   ],
-  "trades": [],
+  "trades": [
+    {
+      "kauf_datum": "2026-07-14",
+      "kauf_preis": 56893.1,
+      "verkauf_datum": "2026-08-01",
+      "verkauf_preis": 54482.88,
+      "gewinn_euro": -44.28,
+      "gewinn_prozent": -4.43
+    }
+  ],
   "historie": [
     {
       "datum": "2026-07-02",
@@ -169,6 +183,11 @@
       "datum": "2026-07-31",
       "depotwert": 957.1,
       "buy_hold": 1011.58
+    },
+    {
+      "datum": "2026-08-01",
+      "depotwert": 955.72,
+      "buy_hold": 1011.14
     }
   ]
 }
