@@ -10,7 +10,7 @@
     "kapital_vorher": 1000.0
   },
   "buyhold_coins": 0.01855876943654907,
-  "letzter_verarbeiteter_tag": "2026-09-19",
+  "letzter_verarbeiteter_tag": "2026-09-20",
   "signale": [
     {
       "datum": "2026-07-14",
@@ -433,6 +433,11 @@
       "datum": "2026-09-19",
       "depotwert": 955.72,
       "buy_hold": 1310.81
+    },
+    {
+      "datum": "2026-09-20",
+      "depotwert": 955.72,
+      "buy_hold": 1297.0
     }
   ]
 }
